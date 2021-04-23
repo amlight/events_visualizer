@@ -5,17 +5,18 @@ from bokeh.palettes import d3
 from datetime import datetime
 from parse_data import process_data
 
+# initializing our dataframe,
 data = process_data()
-nodes = list(data.columns.values)
+links = list(data.columns.values)
 current_day = datetime.now().date()
 
 # this is so the checkboxgroup has all boxes active by default when the application starts running
 active_boxes = []
-for i in range(len(nodes)):
+for i in range(len(links)):
     active_boxes.append(i)
 
-# widgets for input controls
-node_checkbox = CheckboxGroup(labels=nodes, active=active_boxes)
+# initializing widgets
+link_checkbox = CheckboxGroup(labels=links, active=active_boxes)
 reset_button = Button(label="Select All", width=50)
 daterange_start = DatePicker(title='Select start date', value="2020-10-15", min_date="2020-10-15", max_date=current_day)
 daterange_end = DatePicker(title='Select end date', value=current_day, min_date="2020-10-15", max_date=current_day)
@@ -29,13 +30,14 @@ p = figure(plot_height=650, title="AmLight Link Flap Events", sizing_mode="stret
            x_axis_type='datetime', toolbar_location='above')
 
 # creating renderers for each stacker on the plot - necessary to assign HoverTools
-renderers = p.vbar_stack(nodes, x='index', width=1e7, source=source, legend_label=nodes,
-                         color=d3['Category20'][len(nodes)], line_color="black", name=nodes)
+renderers = p.vbar_stack(links, x='index', width=1e7, source=source, legend_label=links,
+                         color=d3['Category20'][len(links)], line_color="black", name=links)
 
+# assign each renderer a HoverTool - this allows each stacker to have its own HoverTool with relevant information
 for r in renderers:
-    node = r.name
+    link = r.name
     hover = HoverTool(tooltips=[
-        ("%s events" % node, "@$name"),
+        ("%s events" % link, "@$name"),
         ("date", "@index{%F}")
     ], formatters={
         '@index': 'datetime',
@@ -50,9 +52,9 @@ p.y_range.end = data.max().max() + 15
 def update():
     start = daterange_start.value
     end = daterange_end.value
-    active_labels = [node_checkbox.labels[i] for i in node_checkbox.active]
+    active_labels = [link_checkbox.labels[i] for i in link_checkbox.active]
 
-    # make a copy of the parsed dataframe from list of active nodes (selected by checkbox)
+    # make a copy of the parsed dataframe from list of active links (selected by checkbox)
     temp_df = data[active_labels]
 
     if start == end:
@@ -70,13 +72,18 @@ def update():
 
 # function for reset button
 def select_all():
-    node_checkbox.active = list(range(len(nodes)))
+    link_checkbox.active = list(range(len(links)))
 
 
 # groups all widgets together and calls update function if any are interacted with
-controls = [daterange_start, daterange_end, node_checkbox, reset_button]
+controls = [daterange_start, daterange_end, link_checkbox, reset_button]
+
+update()
+
+# this code snippet was taken from the bokeh example application named "movies"
+# examples gallery can be found at https://docs.bokeh.org/en/latest/docs/gallery.html
 for control in controls:
-    if control == node_checkbox:
+    if control == link_checkbox:
         control.on_change('active', lambda attr, old, new: update())
     elif control == reset_button:
         control.on_click(select_all)

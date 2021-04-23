@@ -39,12 +39,12 @@ def process_data():
     # look for duplicates of (Timestamp, Device) values and put that summation in a new 'Count' column
     df = df.pivot_table(index=['Timestamp', 'Device'], aggfunc='size').to_frame('Count').reset_index()
 
-    # this turns the'Device' column values into column headers (and timestamps into the new index)
+    # this turns the 'Device' column values into column headers (and timestamps into the new index)
     df = df.pivot(index='Timestamp', columns='Device', values='Count')
+    df.fillna(0, inplace=True)
 
     # group counts based on day
     df = df.resample('D').sum()
-    df.fillna(0, inplace=True)
 
     res = get_dictionary()
 
@@ -59,4 +59,3 @@ def process_data():
     del df.index.name
 
     return df
-
